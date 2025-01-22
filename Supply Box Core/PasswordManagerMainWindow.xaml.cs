@@ -16,25 +16,13 @@ using System.Windows.Shapes;
 namespace Supply_Box_Core
 {
     /// <summary>
-    /// Interação lógica para MainWindow.xam
+    /// Interaction logic for PasswordManagerMainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class PasswordManagerMainWindow : Page
     {
-        public MainWindow()
+        public PasswordManagerMainWindow()
         {
             InitializeComponent();
-            InitializeMainWindow();
-        }
-
-        private async void InitializeMainWindow()
-        {
-            MainFrame.Navigate(new SplashScreenPage());
-            await ShowSelectionPageAfterDelay();
-        }
-        public async Task ShowSelectionPageAfterDelay()
-        {
-            await Task.Delay(5000);
-            MainFrame.Navigate(new SelectionPage());
         }
     }
 }

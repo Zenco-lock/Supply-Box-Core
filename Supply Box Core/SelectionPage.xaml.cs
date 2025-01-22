@@ -15,26 +15,26 @@ using System.Windows.Shapes;
 
 namespace Supply_Box_Core
 {
-    /// <summary>
-    /// Interação lógica para MainWindow.xam
-    /// </summary>
-    public partial class MainWindow : Window
+    public partial class SelectionPage : Page
     {
-        public MainWindow()
+        public SelectionPage()
         {
             InitializeComponent();
-            InitializeMainWindow();
         }
 
-        private async void InitializeMainWindow()
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
-            MainFrame.Navigate(new SplashScreenPage());
-            await ShowSelectionPageAfterDelay();
+            NavigationService.Navigate(new PasswordManagerAuth());
         }
-        public async Task ShowSelectionPageAfterDelay()
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            await Task.Delay(5000);
-            MainFrame.Navigate(new SelectionPage());
+            MessageBox.Show("TBA Feature 1");
+        }
+
+        private void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("TBA Feature 2");
         }
     }
 }
