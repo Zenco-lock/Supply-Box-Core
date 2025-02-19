@@ -24,5 +24,16 @@ namespace Supply_Box_Core
         {
             InitializeComponent();
         }
+
+        private void SubmitButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
+/// remover os "exemplos" (jane e joe).
+/// construir codigo simples´, com recurso a outros projetos similares
+/// parte importante que nao me posso voltar a esquecer, armazenamento em ficheiro local, isto ja tem de ser resolvido com a questao do botao submit.
+/// porque a grid de cima ira escrever e a de baxio (jane e joe) iram ler esse arquivo
+/// adicionar botao de "copy to clipboard"
+/// configurar botao menu
