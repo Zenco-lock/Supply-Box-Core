@@ -29,6 +29,21 @@ namespace Supply_Box_Core
         {
 
         }
+
+        private void UserTextbox_TextChanged_1(object sender, TextChangedEventArgs e)
+        {
+
+        }
+
+        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void EditButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
 /// remover os "exemplos" (jane e joe).
