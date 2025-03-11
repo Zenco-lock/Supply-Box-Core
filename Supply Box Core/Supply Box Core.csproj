@@ -56,12 +56,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="EncryptionService.cs" />
     <Compile Include="PasswordManagerAuth.xaml.cs">
       <DependentUpon>PasswordManagerAuth.xaml</DependentUpon>
     </Compile>
     <Compile Include="PasswordManagerMainWindow.xaml.cs">
       <DependentUpon>PasswordManagerMainWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="PasswordStorage.cs" />
     <Compile Include="SelectionPage.xaml.cs">
       <DependentUpon>SelectionPage.xaml</DependentUpon>
     </Compile>
