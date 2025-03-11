@@ -1,19 +1,29 @@
 ﻿using System;
-using System.IO;
-using System.Security.Cryptography;
+using System.Collections.Generic;
+using System.IO;                        // Necessário para File, Directory, MemoryStream, StreamReader, StreamWriter
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Security.Cryptography;      // Necessário para Aes, CipherMode, PaddingMode, ICryptoTransform, CryptoStream
 using IOPath = System.IO.Path;
+
 
 namespace Supply_Box_Core
 {
     public partial class PasswordManagerMainWindow : Page
     {
-        // Define o caminho para armazenar as credenciais: dentro do LocalApplicationData do utilizador
+        // Define o caminho para armazenar as credenciais: pasta no LocalApplicationData
         private readonly string dataFolder = IOPath.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WindowsSecurityCache");
+        private List<dynamic> credentials = new List<dynamic>();
 
         public PasswordManagerMainWindow()
         {
@@ -33,21 +43,52 @@ namespace Supply_Box_Core
                 return;
             }
 
-            // Gera um nome de ficheiro único para a credencial
             string fileName = IOPath.Combine(dataFolder, $"{Guid.NewGuid()}.dat");
-            // Encripta os dados no formato "username|password"
             string encryptedData = EncryptData($"{username}|{password}");
-
-            // Guarda o ficheiro com os dados encriptados
             File.WriteAllText(fileName, encryptedData);
 
-            MessageBox.Show("Credencial guardada com sucesso!", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Adiciona a nova credencial no início da lista
+            credentials.Insert(0, new { Username = username, Password = password });
+            RefreshCredentialList();
 
-            // Limpa os inputs
             UserTextbox.Clear();
             PasswordTextbox.Clear();
+        }
 
-            LoadCredentials(); // Atualiza a lista de credenciais
+        private void LoadCredentials()
+        {
+            credentials.Clear();
+            foreach (string file in Directory.GetFiles(dataFolder, "*.dat"))
+            {
+                string encryptedData = File.ReadAllText(file);
+                string decryptedData = DecryptData(encryptedData);
+                if (!string.IsNullOrEmpty(decryptedData))
+                {
+                    string[] parts = decryptedData.Split('|');
+                    if (parts.Length == 2)
+                    {
+                        credentials.Add(new { Username = parts[0], Password = parts[1] });
+                    }
+                }
+            }
+            RefreshCredentialList();
+        }
+
+        private void RefreshCredentialList()
+        {
+            CredentialList.ItemsSource = null;
+            CredentialList.ItemsSource = credentials;
+        }
+
+        private void CopyButton_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = sender as Button;
+            // O DataContext do botão é o item de dados (o objeto anônimo com Username e Password)
+            dynamic item = btn.DataContext;
+            if (item != null)
+            {
+                Clipboard.SetText(item.Password);
+            }
         }
 
         private string EncryptData(string plainText)
@@ -95,137 +136,6 @@ namespace Supply_Box_Core
                     using (StreamReader srDecrypt = new StreamReader(csDecrypt))
                     {
                         return srDecrypt.ReadToEnd();
-                    }
-                }
-            }
-        }
-
-        private void LoadCredentials()
-        {
-            // Limpa o contêiner para evitar duplicação
-            CredentialStackPanel.Children.Clear();
-
-            // Obtém os ficheiros de credencial e os ordena para que os mais recentes fiquem no topo
-            var files = Directory.GetFiles(dataFolder, "*.dat");
-            Array.Sort(files, (x, y) => File.GetCreationTime(y).CompareTo(File.GetCreationTime(x)));
-
-            foreach (string file in files)
-            {
-                string encryptedData = File.ReadAllText(file);
-                string decryptedData = DecryptData(encryptedData);
-
-                if (!string.IsNullOrEmpty(decryptedData))
-                {
-                    string[] parts = decryptedData.Split('|');
-                    if (parts.Length == 2)
-                    {
-                        string username = parts[0];
-                        string password = parts[1];
-
-                        // Cria o cartão (Border) com as mesmas dimensões e estilo do formulário superior
-                        Border card = new Border
-                        {
-                            Background = Brushes.White,
-                            CornerRadius = new CornerRadius(10),
-                            Width = 600,
-                            Height = 200,
-                            Margin = new Thickness(20),
-                            Padding = new Thickness(10),
-                            HorizontalAlignment = HorizontalAlignment.Center
-                        };
-
-                        // Cria um StackPanel horizontal para imitar o layout do formulário superior
-                        StackPanel cardPanel = new StackPanel
-                        {
-                            Orientation = Orientation.Horizontal,
-                            HorizontalAlignment = HorizontalAlignment.Center,
-                            VerticalAlignment = VerticalAlignment.Center
-                        };
-
-                        // Ícone (retângulo cinzento) igual ao da área superior
-                        Rectangle iconRect = new Rectangle
-                        {
-                            Fill = Brushes.Gray,
-                            Width = 60,
-                            Height = 60,
-                            Margin = new Thickness(10)
-                        };
-
-                        // StackPanel vertical para os textos
-                        StackPanel textPanel = new StackPanel
-                        {
-                            Orientation = Orientation.Vertical,
-                            HorizontalAlignment = HorizontalAlignment.Center,
-                            VerticalAlignment = VerticalAlignment.Center,
-                            Margin = new Thickness(20, 0, 0, 0)
-                        };
-
-                        // Rótulos e valores (User e Password)
-                        TextBlock userLabel = new TextBlock
-                        {
-                            Text = "User:",
-                            FontSize = 18,
-                            FontWeight = FontWeights.Bold,
-                            Margin = new Thickness(5)
-                        };
-                        TextBlock userValue = new TextBlock
-                        {
-                            Text = username,
-                            FontSize = 18,
-                            FontWeight = FontWeights.Bold,
-                            Margin = new Thickness(5, 0, 5, 10)
-                        };
-
-                        TextBlock passLabel = new TextBlock
-                        {
-                            Text = "Password:",
-                            FontSize = 18,
-                            FontWeight = FontWeights.Bold,
-                            Margin = new Thickness(5, 10, 5, 0)
-                        };
-                        TextBlock passValue = new TextBlock
-                        {
-                            Text = "********",
-                            FontSize = 18,
-                            FontWeight = FontWeights.Bold,
-                            Margin = new Thickness(5)
-                        };
-
-                        // Adiciona os rótulos e valores ao textPanel
-                        textPanel.Children.Add(userLabel);
-                        textPanel.Children.Add(userValue);
-                        textPanel.Children.Add(passLabel);
-                        textPanel.Children.Add(passValue);
-
-                        // Adiciona o ícone e o textPanel ao cardPanel
-                        cardPanel.Children.Add(iconRect);
-                        cardPanel.Children.Add(textPanel);
-
-                        // Cria o botão de copiar com as mesmas dimensões e estilo do botão SUBMIT
-                        Button copyButton = new Button
-                        {
-                            Content = "📋",
-                            Width = 80,
-                            Height = 73,
-                            Background = Brushes.Gray,
-                            Foreground = Brushes.White,
-                            FontSize = 16,
-                            FontFamily = new FontFamily("Bahnschrift SemiBold"),
-                            FontWeight = FontWeights.Bold,
-                            HorizontalContentAlignment = HorizontalAlignment.Center,
-                            VerticalAlignment = VerticalAlignment.Center,
-                            Margin = new Thickness(20, 0, 20, -20)
-                        };
-                        copyButton.Click += (s, e) => Clipboard.SetText(password);
-
-                        // Adiciona o botão de copiar ao cardPanel (ao final, mantendo o layout horizontal)
-                        cardPanel.Children.Add(copyButton);
-
-                        // Define o conteúdo do cartão como o cardPanel
-                        card.Child = cardPanel;
-
-                        // Insere o cartão no contêiner, de forma que os itens mais recentes apareçam no topo
-                        CredentialStackPanel.Children.Insert(0, card);
                     }
                 }
             }
