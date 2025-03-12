@@ -1,26 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 
 namespace Supply_Box_Core
 {
     public class DesignTimeViewModel
     {
-        public List<CredentialModel> Credentials { get; set; }
+        public ObservableCollection<Credential> Credentials { get; set; }
 
         public DesignTimeViewModel()
         {
-            Credentials = new List<CredentialModel>
-        {
-            new CredentialModel { Username = "user1", Password = "password123" },
-            new CredentialModel { Username = "user2", Password = "mySecret" }
-        };
+            Credentials = new ObservableCollection<Credential>
+            {
+                new Credential { Username = "JohnDoe", Password = "password123" },
+                new Credential { Username = "AliceSmith", Password = "qwerty" }
+            };
         }
     }
 
-    public class CredentialModel
+    public class Credential
     {
         public string Username { get; set; }
         public string Password { get; set; }
