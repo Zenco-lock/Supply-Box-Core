@@ -19,7 +19,7 @@ using IOPath = System.IO.Path;
 
 namespace Supply_Box_Core
 {
-    public partial class PasswordManagerMainWindow : Page
+    public partial class PasswordManagerMainWindow : Window
     {
         // Define o caminho para armazenar as credenciais: pasta no LocalApplicationData
         private readonly string dataFolder = IOPath.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WindowsSecurityCache");

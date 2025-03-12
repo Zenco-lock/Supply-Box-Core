@@ -31,7 +31,12 @@ namespace Supply_Box_Core
 
             if (inputText == "1234")
             {
-                NavigationService.Navigate(new PasswordManagerMainWindow());
+                // Criar e exibir a nova janela (PasswordManagerMainWindow)
+                PasswordManagerMainWindow mainWindow = new PasswordManagerMainWindow();
+                mainWindow.Show();
+
+                // Fechar a janela atual (PasswordManagerAuth)
+                Window.GetWindow(this)?.Close();
             }
             else
             {
