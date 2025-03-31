@@ -22,7 +22,11 @@ namespace Supply_Box_Core
             string encryptedData = EncryptionService.Encrypt($"{site}|{username}|{password}");
             File.WriteAllText(filePath, encryptedData);
 
-            // Aplica permissões de segurança
+            // Código específico para Windows
+#if WINDOWS
+            // Aplica permissões de segurança usando FileInfo
+            FileInfo fileInfo = new FileInfo(filePath);
+
             FileSecurity security = new FileSecurity();
             security.SetAccessRuleProtection(true, false);
             security.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null),
@@ -32,8 +36,12 @@ namespace Supply_Box_Core
             security.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null),
                 FileSystemRights.Read, AccessControlType.Deny));
 
-            File.SetAccessControl(filePath, security);
-            File.SetAttributes(filePath, FileAttributes.Hidden | FileAttributes.System);
+            fileInfo.SetAccessControl(security);
+            fileInfo.Attributes = FileAttributes.Hidden | FileAttributes.System; // Marca o arquivo como oculto e do sistema
+#else
+            // Caso o código não esteja sendo executado no Windows, uma mensagem alternativa
+            Console.WriteLine("Este código de controle de acesso é específico para Windows. Ignorando o controle de permissões.");
+#endif
         }
 
         public static string LoadCredential(string filePath)

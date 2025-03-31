@@ -12,36 +12,57 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Windows.Security.Credentials.UI;
 
 namespace Supply_Box_Core
 {
-    /// <summary>
-    /// Interaction logic for PasswordManagerAuth.xaml
-    /// </summary>
     public partial class PasswordManagerAuth : Page
     {
         public PasswordManagerAuth()
         {
             InitializeComponent();
+            AuthenticateWithWindowsHello(); // Automatically triggers Windows Hello on page load
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private async void AuthenticateWithWindowsHello()
         {
-            string inputText = AuthPasswordBox.Password;
-
-            if (inputText == "1234")
+            try
             {
-                // Criar e exibir a nova janela (PasswordManagerMainWindow)
-                PasswordManagerMainWindow mainWindow = new PasswordManagerMainWindow();
-                mainWindow.Show();
+                // Show message indicating authentication process
+                AuthMessageText.Text = "Authenticating with Windows Hello...";
 
-                // Fechar a janela atual (PasswordManagerAuth)
-                Window.GetWindow(this)?.Close();
+                // Trigger Windows Hello authentication process
+                var result = await UserConsentVerifier.RequestVerificationAsync("Please verify your identity to proceed.");
+
+                if (result == UserConsentVerificationResult.Verified)
+                {
+                    // Successful authentication, open next window
+                    PasswordManagerMainWindow mainWindow = new PasswordManagerMainWindow();
+                    mainWindow.Show();
+
+                    // Close the current window
+                    Window.GetWindow(this)?.Close();
+                }
+                else
+                {
+                    // Authentication failed, show retry button
+                    AuthMessageText.Text = "Authentication failed. Please try again.";
+                    LoginButton.Visibility = Visibility.Visible; // Show retry button
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Error: Wrong key!", "Authentication Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Handle error and show retry option
+                AuthMessageText.Text = "Error: " + ex.Message;
+                LoginButton.Visibility = Visibility.Visible; // Show retry button
             }
+        }
+
+        private void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Hide button while retrying authentication
+            LoginButton.Visibility = Visibility.Collapsed;
+            AuthenticateWithWindowsHello(); // Retry authentication
         }
     }
 }
