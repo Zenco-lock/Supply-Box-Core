@@ -36,35 +36,50 @@ namespace Supply_Box_Core
         }
         private void SubmitButton_Click(object sender, RoutedEventArgs e)
         {
+            string appName = AppNameTextbox.Text; // Novo campo para o nome do aplicativo
             string username = UserTextbox.Text;
             string password = PasswordTextbox.Password;
 
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            // Verifica se os campos não estão vazios
+            if (string.IsNullOrWhiteSpace(appName) || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                MessageBox.Show("Preencha todos os campos!", "Erro", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Please fill in all fields!", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
+            // Verifica se estamos no modo de edição
             if (editingCredentialFilePath != null)
             {
-                // Atualiza o arquivo existente
-                string encryptedData = EncryptData($"{username}|{password}");
+                // Se estivermos editando, substitui os dados do arquivo existente
+                string encryptedData = EncryptData($"{appName}|{username}|{password}");
                 File.WriteAllText(editingCredentialFilePath, encryptedData);
-                editingCredentialFilePath = null;
-                MessageBox.Show("Credencial atualizada com sucesso!", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // Limpa os campos após salvar
+                AppNameTextbox.Clear();
+                UserTextbox.Clear();
+                PasswordTextbox.Clear();
+
+                // Recarrega as credenciais
+                LoadCredentials();
+
+                // Limpa o estado de edição
+                editingCredentialFilePath = null;  // Reseta a referência do arquivo
             }
             else
             {
+                // Se não estivermos editando, cria uma nova credencial (novo arquivo)
+                string encryptedData = EncryptData($"{appName}|{username}|{password}");
                 string fileName = IOPath.Combine(dataFolder, $"{Guid.NewGuid()}.dat");
-                string encryptedData = EncryptData($"{username}|{password}");
                 File.WriteAllText(fileName, encryptedData);
+
+                // Limpa os campos após salvar
+                AppNameTextbox.Clear();
+                UserTextbox.Clear();
+                PasswordTextbox.Clear();
+
+                // Recarrega as credenciais
+                LoadCredentials();
             }
-
-            UserTextbox.Clear();
-            PasswordTextbox.Clear();
-
-            // Recarrega as credenciais da pasta
-            LoadCredentials();
         }
 
         private void LoadCredentials()
@@ -77,14 +92,14 @@ namespace Supply_Box_Core
                 if (!string.IsNullOrEmpty(decryptedData))
                 {
                     string[] parts = decryptedData.Split('|');
-                    if (parts.Length == 2)
+                    if (parts.Length == 3) // Agora temos AppName, Username e Password
                     {
-                        // Adiciona cada credencial, incluindo o FilePath para referência
-                        Credentials.Add(new { Username = parts[0], Password = parts[1], FilePath = file });
+                        Credentials.Add(new { AppName = parts[0], Username = parts[1], Password = parts[2], FilePath = file });
                     }
                 }
             }
         }
+
 
         private void CopyButton_Click(object sender, RoutedEventArgs e)
         {
@@ -118,6 +133,8 @@ namespace Supply_Box_Core
                     currentEditingButton = null;
                     UserTextbox.Clear();
                     PasswordTextbox.Clear();
+                    AppNameTextbox.Clear(); // Limpa o campo AppName na UI
+                    AppNameTextbox.IsReadOnly = true; // Impede edição ao cancelar
                     MessageBox.Show("Edição cancelada", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
@@ -130,9 +147,13 @@ namespace Supply_Box_Core
                     // Inicia a edição para o novo item
                     UserTextbox.Text = item.Username;
                     PasswordTextbox.Password = item.Password;
+                    AppNameTextbox.Text = item.AppName; // Aqui o AppName é atribuído corretamente
                     editingCredentialFilePath = item.FilePath;
                     btn.Content = "X"; // Atualiza o botão atual para mostrar "X"
                     currentEditingButton = btn;
+
+                    // Torna o campo AppName editável
+                    AppNameTextbox.IsReadOnly = false;
                 }
             }
             else
@@ -140,9 +161,13 @@ namespace Supply_Box_Core
                 // Nenhum item está sendo editado: inicia a edição
                 UserTextbox.Text = item.Username;
                 PasswordTextbox.Password = item.Password;
+                AppNameTextbox.Text = item.AppName; // Aqui o AppName é atribuído corretamente
                 editingCredentialFilePath = item.FilePath;
                 btn.Content = "X";
                 currentEditingButton = btn;
+
+                // Torna o campo AppName editável
+                AppNameTextbox.IsReadOnly = false;
             }
         }
         private void DeleteButton_Click(object sender, RoutedEventArgs e)

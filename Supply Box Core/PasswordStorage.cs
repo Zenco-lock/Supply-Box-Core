@@ -13,20 +13,17 @@ namespace Supply_Box_Core
     {
         private static string folderPath = @"C:\ProgramData\Microsoft\Windows\Explorer\";
 
-        public static void SaveCredential(string site, string username, string password)
+        public static void SaveCredential(string site, string username, string password, string appName)
         {
-            Directory.CreateDirectory(folderPath); // Garante que a pasta existe
-            string fileName = Guid.NewGuid().ToString(); // Nome aleatório
+            Directory.CreateDirectory(folderPath);
+            string fileName = Guid.NewGuid().ToString();
             string filePath = Path.Combine(folderPath, fileName);
 
-            string encryptedData = EncryptionService.Encrypt($"{site}|{username}|{password}");
+            string encryptedData = EncryptionService.Encrypt(site, username, password, appName);
             File.WriteAllText(filePath, encryptedData);
 
-            // Código específico para Windows
 #if WINDOWS
-            // Aplica permissões de segurança usando FileInfo
             FileInfo fileInfo = new FileInfo(filePath);
-
             FileSecurity security = new FileSecurity();
             security.SetAccessRuleProtection(true, false);
             security.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null),
@@ -37,21 +34,18 @@ namespace Supply_Box_Core
                 FileSystemRights.Read, AccessControlType.Deny));
 
             fileInfo.SetAccessControl(security);
-            fileInfo.Attributes = FileAttributes.Hidden | FileAttributes.System; // Marca o arquivo como oculto e do sistema
-#else
-            // Caso o código não esteja sendo executado no Windows, uma mensagem alternativa
-            Console.WriteLine("Este código de controle de acesso é específico para Windows. Ignorando o controle de permissões.");
+            fileInfo.Attributes = FileAttributes.Hidden | FileAttributes.System;
 #endif
         }
 
-        public static string LoadCredential(string filePath)
+        public static (string site, string username, string password, string appName) LoadCredential(string filePath)
         {
             if (File.Exists(filePath))
             {
                 string encryptedData = File.ReadAllText(filePath);
                 return EncryptionService.Decrypt(encryptedData);
             }
-            return null;
+            throw new FileNotFoundException("Arquivo não encontrado.");
         }
 
         public static void DeleteCredential(string filePath)

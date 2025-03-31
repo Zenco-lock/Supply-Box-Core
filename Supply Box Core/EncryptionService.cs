@@ -12,8 +12,11 @@ namespace Supply_Box_Core
         private static readonly byte[] Key = Encoding.UTF8.GetBytes("your-32-char-secret-key-here!"); // 32 bytes
         private static readonly byte[] IV = Encoding.UTF8.GetBytes("your-16-char-IV-here!"); // 16 bytes
 
-        public static string Encrypt(string plainText)
+        // Método de criptografia agora inclui AppName
+        public static string Encrypt(string site, string username, string password, string appName)
         {
+            string plainText = $"{site}|{username}|{password}|{appName}";
+
             using (Aes aesAlg = Aes.Create())
             {
                 aesAlg.Key = Key;
@@ -30,7 +33,8 @@ namespace Supply_Box_Core
             }
         }
 
-        public static string Decrypt(string cipherText)
+        // Método de descriptografia agora retorna AppName também
+        public static (string site, string username, string password, string appName) Decrypt(string cipherText)
         {
             using (Aes aesAlg = Aes.Create())
             {
@@ -43,7 +47,15 @@ namespace Supply_Box_Core
                 {
                     byte[] cipherBytes = Convert.FromBase64String(cipherText);
                     byte[] decrypted = decryptor.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
-                    return Encoding.UTF8.GetString(decrypted);
+                    string decryptedText = Encoding.UTF8.GetString(decrypted);
+
+                    // Separando os valores corretamente
+                    string[] parts = decryptedText.Split('|');
+                    if (parts.Length == 4)
+                    {
+                        return (parts[0], parts[1], parts[2], parts[3]); // Retorna todos os valores
+                    }
+                    throw new Exception("Dados corrompidos ou formato inválido.");
                 }
             }
         }
