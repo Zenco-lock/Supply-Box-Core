@@ -1,0 +1,11 @@
+﻿<UserControl x:Class="Supply_Box_Core.GlobalMenu"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Height="50" Width="160">
+
+    <Grid>
+        <Button Content="☰ Menu" Click="MenuButton_Click" Width="150" Height="40"
+                HorizontalAlignment="Left" VerticalAlignment="Top"
+                Margin="10" FontSize="14" Background="Black" Foreground="White"/>
+    </Grid>
+</UserControl>
