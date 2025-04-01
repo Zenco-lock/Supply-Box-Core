@@ -10,9 +10,12 @@
 
     <Grid Background="DarkSlateGray">
         <TextBlock Text="SelectionPage" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="22" Foreground="White" Background="Black" FontFamily="Bahnschrift SemiBold" />
-        <Button x:Name="PasswordManager" Content="Password&#xD;&#xA;Manager" Width="200" Height="100" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,50,0,0" Foreground="White" Background="Black" Click="Button_Click" FontSize="22" FontFamily="Bahnschrift SemiBold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-        <Button x:Name="TBA1" Content="TBA" Width="200" Height="100" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="100,0,0,50" Foreground="White" Background="Gray" FontFamily="Bahnschrift SemiBold" FontSize="22" Click="Button_Click_1" />
-        <Button x:Name="TBA2" Content="TBA" Width="200" Height="100" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,100,50" Foreground="Black" Background="White" FontSize="22" FontFamily="Bahnschrift SemiBold" Click="Button_Click_2"/>
-    </Grid>
 
+        <Button x:Name="PasswordManager" Content="Password&#xD;&#xA;Manager" Width="200" Height="100" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,50,0,0" Foreground="White" Background="Black" Click="Button_Click" FontSize="22" FontFamily="Bahnschrift SemiBold" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+
+        <Button x:Name="FileEncryptor" Content="File Encryptor" Width="200" Height="100" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="100,0,0,50" Foreground="White" Background="Gray" FontFamily="Bahnschrift SemiBold" FontSize="22" Click="FileEncryptor_Click" Visibility="Collapsed" />
+        <Button x:Name="CypherChat" Content="Cypher Chat" Width="200" Height="100" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,100,50" Foreground="Black" Background="White" FontSize="22" FontFamily="Bahnschrift SemiBold" Click="CypherChat_Click" Visibility="Collapsed" />
+
+        <Button x:Name="FutureFeatures" Content="🚀 Coming Soon" Width="120" Height="40" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,10" Foreground="White" Background="Transparent" BorderBrush="Transparent" FontSize="14" FontFamily="Bahnschrift SemiBold" Click="FutureFeatures_Click" Opacity="0.7"/>
+    </Grid>
 </Page>
