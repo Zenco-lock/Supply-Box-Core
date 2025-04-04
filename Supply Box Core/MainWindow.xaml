@@ -6,7 +6,12 @@
         xmlns:local="clr-namespace:Supply_Box_Core"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
+
+    <!-- Janela principal da aplicação com dimensões e título definidos -->
+
     <Grid>
-        <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden" /> 
+        <!-- Frame utilizado para navegar entre páginas da aplicação.
+             A propriedade NavigationUIVisibility="Hidden" oculta os controlos de navegação (como os botões de voltar/avançar). -->
+        <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden" />
     </Grid>
 </Window>

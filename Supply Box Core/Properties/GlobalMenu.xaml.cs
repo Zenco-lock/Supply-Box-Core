@@ -17,17 +17,19 @@ namespace Supply_Box_Core
 {
     public partial class GlobalMenu : UserControl
     {
+        // Construtor do controlo GlobalMenu
         public GlobalMenu()
         {
-            InitializeComponent();
+            InitializeComponent(); // Inicializa os componentes definidos no ficheiro XAML
         }
 
+        // Evento que é executado quando o botão de menu (☰) é clicado
         private void MenuButton_Click(object sender, RoutedEventArgs e)
         {
-            // Verifica se a janela principal possui um Frame para navegar
+            // Verifica se a janela principal atual é do tipo MainWindow
             if (Application.Current.MainWindow is MainWindow mainWindow)
             {
-                // Navega para a SelectionPage dentro do Frame
+                // Se for, utiliza o Frame da MainWindow para navegar para a página SelectionPage
                 mainWindow.MainFrame.Navigate(new SelectionPage());
             }
         }

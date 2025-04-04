@@ -16,12 +16,14 @@ using System.Windows.Shapes;
 namespace Supply_Box_Core
 {
     /// <summary>
-    /// Interaction logic for SplashScreenPage.xaml
+    /// Lógica de interação para a página SplashScreenPage.xaml
     /// </summary>
     public partial class SplashScreenPage : Page
     {
+        // Construtor da página SplashScreen
         public SplashScreenPage()
         {
+            // Inicializa os componentes definidos no ficheiro XAML correspondente
             InitializeComponent();
         }
     }

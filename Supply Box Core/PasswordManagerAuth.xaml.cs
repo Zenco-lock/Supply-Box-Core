@@ -21,48 +21,54 @@ namespace Supply_Box_Core
         public PasswordManagerAuth()
         {
             InitializeComponent();
-            AuthenticateWithWindowsHello(); // Automatically triggers Windows Hello on page load
+
+            // Inicia automaticamente o processo de autenticação com o Windows Hello ao carregar a página
+            AuthenticateWithWindowsHello();
         }
 
+        // Método assíncrono responsável por autenticar o utilizador através do Windows Hello
         private async void AuthenticateWithWindowsHello()
         {
             try
             {
-                // Show message indicating authentication process
+                // Atualiza a mensagem de interface para informar o utilizador
                 AuthMessageText.Text = "Authenticating with Windows Hello...";
 
-                // Trigger Windows Hello authentication process
+                // Inicia o processo de verificação de identidade através do Windows Hello
                 var result = await UserConsentVerifier.RequestVerificationAsync("Please verify your identity to proceed.");
 
                 if (result == UserConsentVerificationResult.Verified)
                 {
-                    // Successful authentication, open next window
+                    // Autenticação bem-sucedida: abre a janela principal do gestor de palavras-passe
                     PasswordManagerMainWindow mainWindow = new PasswordManagerMainWindow();
                     mainWindow.Show();
 
-                    // Close the current window
+                    // Fecha a janela atual (autenticação)
                     Window.GetWindow(this)?.Close();
                 }
                 else
                 {
-                    // Authentication failed, show retry button
+                    // Autenticação falhada: atualiza a interface e mostra o botão de nova tentativa
                     AuthMessageText.Text = "Authentication failed. Please try again.";
-                    LoginButton.Visibility = Visibility.Visible; // Show retry button
+                    LoginButton.Visibility = Visibility.Visible;
                 }
             }
             catch (Exception ex)
             {
-                // Handle error and show retry option
+                // Em caso de erro na autenticação, mostra a mensagem de erro e permite nova tentativa
                 AuthMessageText.Text = "Error: " + ex.Message;
-                LoginButton.Visibility = Visibility.Visible; // Show retry button
+                LoginButton.Visibility = Visibility.Visible;
             }
         }
 
+        // Evento associado ao clique no botão de login
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            // Hide button while retrying authentication
+            // Esconde o botão durante nova tentativa de autenticação
             LoginButton.Visibility = Visibility.Collapsed;
-            AuthenticateWithWindowsHello(); // Retry authentication
+
+            // Recomeça o processo de autenticação
+            AuthenticateWithWindowsHello();
         }
     }
 }

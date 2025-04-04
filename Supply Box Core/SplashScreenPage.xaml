@@ -8,15 +8,36 @@
       d:DesignHeight="600" d:DesignWidth="800"
       Title="SplashScreenPage">
 
+    <!-- Grid principal que cobre toda a página com fundo branco -->
     <Grid Background="White">
-        <Image Source="Suply_Box_Core_Logo.jpg" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="UniformToFill" />
 
-        <Grid HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,40">
-            <ProgressBar IsIndeterminate="True" Width="624" Height="37" HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock Text="Loading..." HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Black" FontSize="20" FontStyle="Italic"/>
+        <!-- Logo da aplicação posicionado no centro -->
+        <Image Source="Suply_Box_Core_Logo.jpg" 
+               HorizontalAlignment="Center" 
+               VerticalAlignment="Center" 
+               Stretch="UniformToFill" />
+
+        <!-- Grid secundário para a barra de progresso e o texto de carregamento -->
+        <Grid HorizontalAlignment="Center" 
+              VerticalAlignment="Bottom" 
+              Margin="0,0,0,40">
+
+            <!-- Barra de progresso indeterminada para indicar o carregamento -->
+            <ProgressBar IsIndeterminate="True" 
+                         Width="624" 
+                         Height="37" 
+                         HorizontalAlignment="Center" 
+                         VerticalAlignment="Center" />
+
+            <!-- Texto "Loading..." para indicar visualmente que algo está a ser carregado -->
+            <TextBlock Text="Loading..." 
+                       HorizontalAlignment="Center" 
+                       VerticalAlignment="Center" 
+                       Foreground="Black" 
+                       FontSize="20" 
+                       FontStyle="Italic"/>
         </Grid>
-        
- 
+
     </Grid>
-    
+
 </Page>
