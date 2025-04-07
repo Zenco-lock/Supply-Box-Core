@@ -10,6 +10,7 @@
     <!-- Certifique-se de que as versões sejam compatíveis -->
     <SupportedOSPlatformVersion>10.0.22621.0</SupportedOSPlatformVersion>
     <TargetPlatformVersion>10.0.22621.0</TargetPlatformVersion>
+    <ApplicationIcon>Supply-Box-Core-Ico.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Resource Include="Suply_Box_Core_Logo.jpg" />
@@ -20,6 +21,9 @@
   <ItemGroup>
     <Compile Remove="Window1.xaml.cs" />
     <Page Remove="Window1.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Supply-Box-Core-Ico.ico" />
   </ItemGroup>
     <ItemGroup>
     <WindowsSdkSupportedTargetPlatformVersion Include="10.0.26100.1" WindowsSdkPackageVersion="10.0.26100.1" MinimumNETVersion="6.0" />
