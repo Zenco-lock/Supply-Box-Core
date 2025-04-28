@@ -16,6 +16,8 @@
     <Resource Include="Suply_Box_Core_Logo.jpg" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="gong-wpf-dragdrop" />
+    <PackageReference Include="LightImage.DragDrop.Wpf" />
     <PackageReference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>

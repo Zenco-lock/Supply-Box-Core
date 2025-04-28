@@ -5,6 +5,9 @@
     <NoWarn>$(NoWarn);NU1507</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="gong-wpf-dragdrop" Version="4.0.0" />
+    <PackageVersion Include="LightImage.DragDrop" Version="0.5.5" />
+    <PackageVersion Include="LightImage.DragDrop.Wpf" Version="0.5.5" />
     <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageVersion Include="Microsoft.Windows.SDK.Contracts" Version="10.0.26100.1" />
   </ItemGroup>

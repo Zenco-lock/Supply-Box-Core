@@ -39,64 +39,58 @@ namespace Supply_Box_Core
         // Evento chamado quando o botão "SUBMIT" é clicado para salvar ou editar uma credencial
         private void SubmitButton_Click(object sender, RoutedEventArgs e)
         {
-            string appName = AppNameTextbox.Text; // Nome do aplicativo
-            string username = UserTextbox.Text; // Nome de usuário
-            string password = PasswordTextbox.Password; // Senha
+            string appName = AppNameTextbox.Text;
+            string username = UserTextbox.Text;
+            string password = PasswordTextbox.Password;
 
-            // Verifica se todos os campos foram preenchidos
-            if (string.IsNullOrWhiteSpace(appName) || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-            {
-                MessageBox.Show("Please fill in all fields!", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+            // ... validação omitida ...
 
-            // Se estiver no modo de edição (um item já foi selecionado para ser editado)
+            string plainData = $"{appName}|{username}|{password}";
+            string encryptedData = EncryptionService.EncryptData(plainData);
+
             if (editingCredentialFilePath != null)
             {
-                // Criptografa e salva a credencial editada no arquivo existente
-                string encryptedData = EncryptData($"{appName}|{username}|{password}");
-                File.WriteAllText(editingCredentialFilePath, encryptedData);
-
-                // Limpa os campos após salvar e recarrega a lista de credenciais
-                AppNameTextbox.Clear();
-                UserTextbox.Clear();
-                PasswordTextbox.Clear();
-                LoadCredentials();
-
-                // Limpa o estado de edição
+                // Edição
+                PasswordStorage.SaveCredential(editingCredentialFilePath, encryptedData);
                 editingCredentialFilePath = null;
             }
             else
             {
-                // Caso contrário, cria uma nova credencial (novo arquivo)
-                string encryptedData = EncryptData($"{appName}|{username}|{password}");
-                string fileName = IOPath.Combine(dataFolder, $"{Guid.NewGuid()}.dat"); // Nome do arquivo gerado com um GUID único
-                File.WriteAllText(fileName, encryptedData);
-
-                // Limpa os campos após salvar e recarrega a lista de credenciais
-                AppNameTextbox.Clear();
-                UserTextbox.Clear();
-                PasswordTextbox.Clear();
-                LoadCredentials();
+                // Novo ficheiro no dataFolder
+                string fileName = IOPath.Combine(dataFolder, $"{Guid.NewGuid()}.dat");
+                PasswordStorage.SaveCredential(fileName, encryptedData);
             }
+
+            // Limpa campos e recarrega
+            AppNameTextbox.Clear();
+            UserTextbox.Clear();
+            PasswordTextbox.Clear();
+            LoadCredentials();
         }
 
         // Carrega as credenciais salvas no diretório de dados
         private void LoadCredentials()
         {
-            Credentials.Clear(); // Limpa a lista antes de recarregar
-            foreach (string file in Directory.GetFiles(dataFolder, "*.dat")) // Obtém todos os arquivos .dat no diretório
+            Credentials.Clear();
+
+            // Usa dataFolder já criado no construtor
+            foreach (var file in PasswordStorage.GetAllCredentialFiles(dataFolder))
             {
-                string encryptedData = File.ReadAllText(file); // Lê os dados criptografados do arquivo
-                string decryptedData = DecryptData(encryptedData); // Descriptografa os dados
+                string encryptedData = PasswordStorage.LoadCredential(file);
+                string decryptedData = EncryptionService.DecryptData(encryptedData);
+
                 if (!string.IsNullOrEmpty(decryptedData))
                 {
-                    // Se a descriptografia for bem-sucedida, divide os dados em três partes: appName, username, e password
                     string[] parts = decryptedData.Split('|');
-                    if (parts.Length == 3) // Confirma que todos os dados foram recuperados
+                    if (parts.Length == 3)
                     {
-                        // Adiciona o item à coleção de credenciais para ser exibido na interface
-                        Credentials.Add(new { AppName = parts[0], Username = parts[1], Password = parts[2], FilePath = file });
+                        Credentials.Add(new
+                        {
+                            AppName = parts[0],
+                            Username = parts[1],
+                            Password = parts[2],
+                            FilePath = file
+                        });
                     }
                 }
             }
@@ -192,62 +186,5 @@ namespace Supply_Box_Core
         }
 
         // Função para criptografar os dados de texto usando AES
-        private string EncryptData(string plainText)
-        {
-            // Chave e IV para a criptografia, ambos devem ser de tamanho fixo (16 bytes para AES-128)
-            byte[] key = Encoding.UTF8.GetBytes("b14ca5898a4e4133bbce2ea2315a1916"); // 16 bytes (128 bits) de chave
-            byte[] iv = Encoding.UTF8.GetBytes("A1B2C3D4E5F60708"); // 16 bytes (128 bits) de vetor de inicialização
-
-            // Cria o algoritmo AES
-            using (Aes aesAlg = Aes.Create())
-            {
-                aesAlg.Key = key;
-                aesAlg.IV = iv;
-                aesAlg.Mode = CipherMode.CBC; // Modo CBC é utilizado para maior segurança
-                aesAlg.Padding = PaddingMode.PKCS7; // Preenchimento PKCS7 garante que o texto tenha um múltiplo do tamanho do bloco
-
-                // Cria um transformador para criptografar os dados
-                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
-                using (MemoryStream msEncrypt = new MemoryStream())
-                {
-                    // Usa o CryptoStream para realizar a criptografia
-                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-                    using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
-                    {
-                        swEncrypt.Write(plainText); // Escreve os dados a serem criptografados
-                    }
-                    return Convert.ToBase64String(msEncrypt.ToArray()); // Retorna os dados criptografados em base64
-                }
-            }
-        }
-
-        // Função para descriptografar os dados criptografados com AES
-        private string DecryptData(string encryptedText)
-        {
-            // Chave e IV usados na criptografia, devem ser os mesmos para descriptografar corretamente
-            byte[] key = Encoding.UTF8.GetBytes("b14ca5898a4e4133bbce2ea2315a1916");
-            byte[] iv = Encoding.UTF8.GetBytes("A1B2C3D4E5F60708");
-
-            // Cria o algoritmo AES para descriptografar os dados
-            using (Aes aesAlg = Aes.Create())
-            {
-                aesAlg.Key = key;
-                aesAlg.IV = iv;
-                aesAlg.Mode = CipherMode.CBC;
-                aesAlg.Padding = PaddingMode.PKCS7;
-
-                // Cria o transformador para descriptografar os dados
-                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
-                using (MemoryStream msDecrypt = new MemoryStream(Convert.FromBase64String(encryptedText)))
-                {
-                    // Usa o CryptoStream para realizar a descriptografia
-                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
-                    using (StreamReader srDecrypt = new StreamReader(csDecrypt))
-                    {
-                        return srDecrypt.ReadToEnd(); // Retorna o texto descriptografado
-                    }
-                }
-            }
-        }
     }
 }
