@@ -18,57 +18,97 @@ namespace Supply_Box_Core
 {
     public partial class PasswordManagerAuth : Page
     {
+        // Flag to track Windows Hello availability
+        private bool isHelloAvailable = false;
+
         public PasswordManagerAuth()
         {
             InitializeComponent();
 
-            // Inicia automaticamente o processo de autenticação com o Windows Hello ao carregar a página
-            AuthenticateWithWindowsHello();
+            // On startup, check if Windows Hello is available
+            CheckWindowsHelloAvailability();
         }
 
-        // Método assíncrono responsável por autenticar o utilizador através do Windows Hello
+        // Checks Windows Hello availability and handles the flow accordingly
+        private async void CheckWindowsHelloAvailability()
+        {
+            // Query Windows Hello availability
+            var availability = await UserConsentVerifier.CheckAvailabilityAsync();
+
+            if (availability == UserConsentVerifierAvailability.Available)
+            {
+                isHelloAvailable = true;
+                // If available, start biometric authentication automatically
+                AuthenticateWithWindowsHello();
+            }
+            else
+            {
+                isHelloAvailable = false;
+                // Show recommendation to enable Windows Hello
+                AuthMessageText.Text =
+                    "Windows Hello is not enabled on this device.\n" +
+                    "To enhance security, enable Windows Hello or set a password " +
+                    "in Settings > Accounts > Sign-in options.\n\n" +
+                    "Continuing without Windows Hello is possible, however, enabling it later is highly recommended.";
+                // Display Continue button even without Windows Hello
+                LoginButton.Content = "Continue";
+                LoginButton.Visibility = Visibility.Visible;
+            }
+        }
+
+        // Windows Hello authentication flow
         private async void AuthenticateWithWindowsHello()
         {
             try
             {
-                // Atualiza a mensagem de interface para informar o utilizador
+                // Update UI and hide button during authentication attempt
                 AuthMessageText.Text = "Authenticating with Windows Hello...";
+                LoginButton.Visibility = Visibility.Collapsed;
 
-                // Inicia o processo de verificação de identidade através do Windows Hello
-                var result = await UserConsentVerifier.RequestVerificationAsync("Please verify your identity to proceed.");
+                // Request biometric verification from the user
+                var result = await UserConsentVerifier.RequestVerificationAsync(
+                    "Please verify your identity to proceed.");
 
                 if (result == UserConsentVerificationResult.Verified)
                 {
-                    // Autenticação bem-sucedida: abre a janela principal do gestor de palavras-passe
-                    PasswordManagerMainWindow mainWindow = new PasswordManagerMainWindow();
+                    // If verified, open main window and close the current one
+                    var mainWindow = new PasswordManagerMainWindow();
                     mainWindow.Show();
-
-                    // Fecha a janela atual (autenticação)
                     Window.GetWindow(this)?.Close();
                 }
                 else
                 {
-                    // Autenticação falhada: atualiza a interface e mostra o botão de nova tentativa
+                    // On failure, show message and allow retry
                     AuthMessageText.Text = "Authentication failed. Please try again.";
+                    LoginButton.Content = "Try Again";
                     LoginButton.Visibility = Visibility.Visible;
                 }
             }
             catch (Exception ex)
             {
-                // Em caso de erro na autenticação, mostra a mensagem de erro e permite nova tentativa
+                // On unexpected error, display exception message and allow retry
                 AuthMessageText.Text = "Error: " + ex.Message;
+                LoginButton.Content = "Try Again";
                 LoginButton.Visibility = Visibility.Visible;
             }
         }
 
-        // Evento associado ao clique no botão de login
+        // Click event for the login/continue button
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            // Esconde o botão durante nova tentativa de autenticação
-            LoginButton.Visibility = Visibility.Collapsed;
-
-            // Recomeça o processo de autenticação
-            AuthenticateWithWindowsHello();
+            if (!isHelloAvailable)
+            {
+                // If Hello is not available and user clicked Continue, open main window
+                var mainWindow = new PasswordManagerMainWindow();
+                mainWindow.Show();
+                Window.GetWindow(this)?.Close();
+            }
+            else
+            {
+                // If Hello is available, hide button and retry authentication
+                LoginButton.Visibility = Visibility.Collapsed;
+                AuthenticateWithWindowsHello();
+            }
         }
     }
 }
