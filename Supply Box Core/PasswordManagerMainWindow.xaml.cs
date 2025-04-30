@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO; // Necessário para manipulação de arquivos (File, Directory)
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,7 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using System.Security.Cryptography; // Necessário para criptografia AES
+using System.Security.Cryptography;
 using IOPath = System.IO.Path;
 using System.Collections.ObjectModel;
 
@@ -20,171 +20,218 @@ namespace Supply_Box_Core
 {
     public partial class PasswordManagerMainWindow : Window
     {
-        // ObservableCollection permite que a interface se atualize automaticamente quando os itens mudam
-        // Isso facilita a sincronização entre a lógica de dados e a interface do usuário
         public ObservableCollection<dynamic> Credentials { get; set; } = new ObservableCollection<dynamic>();
-
-        // Caminho para o diretório onde as credenciais serão armazenadas localmente
-        // O diretório é armazenado na pasta de dados locais do sistema
         private readonly string dataFolder = IOPath.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WindowsSecurityCache");
 
         public PasswordManagerMainWindow()
         {
             InitializeComponent();
-            this.DataContext = this; // Vincula os dados à interface para facilitar o binding
-            Directory.CreateDirectory(dataFolder); // Cria o diretório para armazenar as credenciais, caso não exista
-            LoadCredentials(); // Carrega as credenciais salvas ao inicializar a aplicação
+            this.DataContext = this;
+            Directory.CreateDirectory(dataFolder);
+            AppNameTextbox.IsReadOnly = false; // Garante que o campo seja editável ao iniciar
+            LoadCredentials();
         }
 
-        // Evento chamado quando o botão "SUBMIT" é clicado para salvar ou editar uma credencial
         private void SubmitButton_Click(object sender, RoutedEventArgs e)
         {
             string appName = AppNameTextbox.Text;
             string username = UserTextbox.Text;
             string password = PasswordTextbox.Password;
 
-            // ... validação omitida ...
-
-            string plainData = $"{appName}|{username}|{password}";
-            string encryptedData = EncryptionService.EncryptData(plainData);
-
-            if (editingCredentialFilePath != null)
+            // Validação: todos os campos devem estar preenchidos
+            if (string.IsNullOrWhiteSpace(appName) || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                // Edição
-                PasswordStorage.SaveCredential(editingCredentialFilePath, encryptedData);
-                editingCredentialFilePath = null;
-            }
-            else
-            {
-                // Novo ficheiro no dataFolder
-                string fileName = IOPath.Combine(dataFolder, $"{Guid.NewGuid()}.dat");
-                PasswordStorage.SaveCredential(fileName, encryptedData);
+                MessageBox.Show("All fields must be filled.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
 
-            // Limpa campos e recarrega
-            AppNameTextbox.Clear();
-            UserTextbox.Clear();
-            PasswordTextbox.Clear();
-            LoadCredentials();
+            try
+            {
+                string plainData = $"{appName}|{username}|{password}";
+                string encryptedData = EncryptionService.EncryptData(plainData);
+                string fileName = editingCredentialFilePath;
+
+                if (editingCredentialFilePath != null)
+                {
+                    // Edição
+                    PasswordStorage.SaveCredential(editingCredentialFilePath, encryptedData);
+                }
+                else
+                {
+                    // Novo ficheiro
+                    fileName = IOPath.Combine(dataFolder, $"{Guid.NewGuid()}.dat");
+                    PasswordStorage.SaveCredential(fileName, encryptedData);
+                }
+
+                // Verificar se o arquivo foi salvo
+                if (File.Exists(fileName))
+                {
+                    string action = editingCredentialFilePath != null ? "edited" : "added";
+                    MessageBox.Show($"Credential for {appName} {action} successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    editingCredentialFilePath = null;
+                }
+                else
+                {
+                    MessageBox.Show($"Failed to save credential for {appName}. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
+                // Limpa campos e recarrega
+                AppNameTextbox.Clear();
+                UserTextbox.Clear();
+                PasswordTextbox.Clear();
+                LoadCredentials();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while saving the credential for {AppNameTextbox.Text}: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
-        // Carrega as credenciais salvas no diretório de dados
         private void LoadCredentials()
         {
             Credentials.Clear();
 
-            // Usa dataFolder já criado no construtor
-            foreach (var file in PasswordStorage.GetAllCredentialFiles(dataFolder))
+            try
             {
-                string encryptedData = PasswordStorage.LoadCredential(file);
-                string decryptedData = EncryptionService.DecryptData(encryptedData);
-
-                if (!string.IsNullOrEmpty(decryptedData))
+                foreach (var file in PasswordStorage.GetAllCredentialFiles(dataFolder))
                 {
-                    string[] parts = decryptedData.Split('|');
-                    if (parts.Length == 3)
+                    try
                     {
-                        Credentials.Add(new
+                        string encryptedData = PasswordStorage.LoadCredential(file);
+                        string decryptedData = EncryptionService.DecryptData(encryptedData);
+
+                        if (!string.IsNullOrEmpty(decryptedData))
                         {
-                            AppName = parts[0],
-                            Username = parts[1],
-                            Password = parts[2],
-                            FilePath = file
-                        });
+                            string[] parts = decryptedData.Split('|');
+                            if (parts.Length == 3)
+                            {
+                                Credentials.Add(new
+                                {
+                                    AppName = parts[0],
+                                    Username = parts[1],
+                                    Password = parts[2],
+                                    FilePath = file
+                                });
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to load credential from {file}: {ex.Message}", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 }
             }
-        }
-
-        // Evento chamado quando o botão de copiar a senha é clicado
-        private void CopyButton_Click(object sender, RoutedEventArgs e)
-        {
-            Button btn = sender as Button;
-            dynamic item = btn.DataContext; // Obtém o item (credencial) associado ao botão
-            if (item != null)
+            catch (Exception ex)
             {
-                Clipboard.SetText(item.Password); // Copia a senha para a área de transferência
+                MessageBox.Show($"An error occurred while loading credentials: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        // Variáveis para gerenciar o estado de edição de uma credencial
-        private string editingCredentialFilePath = null;
-        private Button currentEditingButton = null;
-
-        // Evento chamado quando o botão de editar é clicado
-        private void EditButton_Click(object sender, RoutedEventArgs e)
+        private void CopyButton_Click(object sender, RoutedEventArgs e)
         {
-            Button btn = sender as Button;
-            dynamic item = btn.DataContext; // Obtém os dados associados ao botão
-            if (item == null)
-                return;
-
-            // Caso já haja um item sendo editado
-            if (editingCredentialFilePath != null)
+            try
             {
-                // Se o mesmo botão foi clicado, cancela a edição (limpa campos e reseta estado)
-                if (currentEditingButton == btn)
+                Button btn = sender as Button;
+                dynamic item = btn.DataContext;
+                if (item != null)
                 {
-                    editingCredentialFilePath = null;
-                    currentEditingButton.Content = "✏"; // Restaura o ícone de edição
-                    currentEditingButton = null;
-                    UserTextbox.Clear();
-                    PasswordTextbox.Clear();
-                    AppNameTextbox.Clear(); // Limpa o campo do nome do aplicativo
-                    AppNameTextbox.IsReadOnly = true; // Impede a edição do nome do aplicativo
-                    MessageBox.Show("Edição cancelada", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    Clipboard.SetText(item.Password);
+                    MessageBox.Show($"Password for {item.AppName} copied to clipboard.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
-                    // Se outro botão foi clicado enquanto já há um item em edição, reinicia a edição para o novo item
+                    MessageBox.Show("No credential selected to copy.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while copying the password for {AppNameTextbox.Text}: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private string editingCredentialFilePath = null;
+        private Button currentEditingButton = null;
+
+        private void EditButton_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = sender as Button;
+            dynamic item = btn.DataContext;
+            if (item == null)
+            {
+                MessageBox.Show("No credential selected to edit.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (editingCredentialFilePath != null)
+            {
+                if (currentEditingButton == btn)
+                {
+                    string cancelledApp = AppNameTextbox.Text;
+                    editingCredentialFilePath = null;
+                    currentEditingButton.Content = "✏";
+                    currentEditingButton = null;
+                    UserTextbox.Clear();
+                    PasswordTextbox.Clear();
+                    AppNameTextbox.Clear();
+                    AppNameTextbox.IsReadOnly = false;
+                    MessageBox.Show($"Edit canceled for {cancelledApp}.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
                     if (currentEditingButton != null)
-                    {
-                        currentEditingButton.Content = "✏"; // Reseta o botão de edição anterior
-                    }
-                    // Inicia a edição para o novo item
+                        currentEditingButton.Content = "✏";
+
                     UserTextbox.Text = item.Username;
                     PasswordTextbox.Password = item.Password;
-                    AppNameTextbox.Text = item.AppName; // Atribui o nome do aplicativo para edição
-                    editingCredentialFilePath = item.FilePath; // Armazena o caminho do arquivo da credencial
-                    btn.Content = "X"; // Muda o ícone do botão para "X" para cancelar a edição
+                    AppNameTextbox.Text = item.AppName;
+                    editingCredentialFilePath = item.FilePath;
+                    btn.Content = "X";
                     currentEditingButton = btn;
-
-                    // Torna o campo AppName editável
                     AppNameTextbox.IsReadOnly = false;
+                    MessageBox.Show($"Editing credential for {item.AppName}.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             else
             {
-                // Caso nenhum item esteja sendo editado, começa a edição do novo item
                 UserTextbox.Text = item.Username;
                 PasswordTextbox.Password = item.Password;
                 AppNameTextbox.Text = item.AppName;
-                editingCredentialFilePath = item.FilePath; // Armazena o caminho do arquivo
+                editingCredentialFilePath = item.FilePath;
                 btn.Content = "X";
                 currentEditingButton = btn;
-
-                // Torna o campo AppName editável
                 AppNameTextbox.IsReadOnly = false;
+                MessageBox.Show($"Editing credential for {item.AppName}.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
-        // Evento chamado quando o botão de deletar é clicado
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
-            Button btn = sender as Button;
-            dynamic item = btn.DataContext; // Obtém os dados associados ao botão
-            if (item != null)
+            try
             {
-                // Deleta o arquivo de credencial
-                if (File.Exists(item.FilePath))
+                Button btn = sender as Button;
+                dynamic item = btn.DataContext;
+                if (item != null)
                 {
-                    File.Delete(item.FilePath); // Deleta o arquivo da credencial
+                    if (File.Exists(item.FilePath))
+                    {
+                        File.Delete(item.FilePath);
+                        Credentials.Remove(item);
+                        MessageBox.Show($"Credential for {item.AppName} deleted successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Credential file for {item.AppName} not found.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
                 }
-                // Remove o item da coleção para atualizar a interface
-                Credentials.Remove(item);
+                else
+                {
+                    MessageBox.Show("No credential selected to delete.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while deleting the credential for {AppNameTextbox.Text}: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        // Função para criptografar os dados de texto usando AES
     }
 }
